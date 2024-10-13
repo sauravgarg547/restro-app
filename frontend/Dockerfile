@@ -1,6 +1,6 @@
 # Frontend Dockerfile (Dockerfile in frontend directory)
 # Use the Node.js image
-FROM node:18-alpine
+FROM node:18-alpine as build
 
 # Set working directory
 WORKDIR /app
@@ -12,13 +12,17 @@ RUN npm install
 # Copy the entire frontend code
 COPY . .
 
-# Build the React app
+# Build the React app and store in /app/dist
 RUN npm run build
 
-# Use nginx to serve the build files
+# Stage 2: Serve with nginx
 FROM nginx:alpine
-COPY --from=0 /app/build /usr/share/nginx/html
+
+# Ensure /usr/share/nginx/html exists and copy files to nginx root
+WORKDIR /usr/share/nginx/html
+COPY --from=build /app/dist .
 
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
+
